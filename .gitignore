@@ -1,36 +1,11 @@
-# 1) Ignore Python caches & venvs
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# from go2_ws
+build
+install
+log
+roslogs
+sanitizer_report.csv
+test_results.xml
 
-# If you have a conda env in "isaac_env/" or "env/", ignore only that:
-isaac_env/
-env/
-venv/
-
-# 2) Ignore ROS 2 workspace build artifacts *inside go2_ws/*
-#    but do NOT ignore the entire go2_ws/ folder.
-#    In other words, only ignore go2_ws/build, go2_ws/install, go2_ws/log
-go2_ws/build/
-go2_ws/install/
-go2_ws/log/
-
-# If you have a separate ROS workspace for isaac-go2-ros2, adjust similarly:
-isaac-go2-ros2/build/
-isaac-go2-ros2/install/
-isaac-go2-ros2/log/
-
-# 3) Ignore OS metadata and common temporary files
-.DS_Store
-Thumbs.db
-
-# 4) (Optional) Ignore large check-point or output folders, but only those:
-ckpts/
-outputs/
-
-# 5) Ignore any other build artifacts you know you never want to commit:
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-Makefile
+# from isaac-go2-ros2
+__pycache__
+outputs
