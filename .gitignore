@@ -1,29 +1,36 @@
-# Ignore Python caches and virtual environments
+# 1) Ignore Python caches & venvs
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# If you have a conda env in "isaac_env/" or "env/", ignore only that:
+isaac_env/
 env/
 venv/
-isaac_env/
-*.egg-info/
 
-# Ignore ROS 2 build/install/log folders
-build/
-install/
-log/
-*.pyc
+# 2) Ignore ROS 2 workspace build artifacts *inside go2_ws/*
+#    but do NOT ignore the entire go2_ws/ folder.
+#    In other words, only ignore go2_ws/build, go2_ws/install, go2_ws/log
+go2_ws/build/
+go2_ws/install/
+go2_ws/log/
 
-# Ignore OS files
+# If you have a separate ROS workspace for isaac-go2-ros2, adjust similarly:
+isaac-go2-ros2/build/
+isaac-go2-ros2/install/
+isaac-go2-ros2/log/
+
+# 3) Ignore OS metadata and common temporary files
 .DS_Store
 Thumbs.db
 
-# Ignore CMake cache and other build files
+# 4) (Optional) Ignore large check-point or output folders, but only those:
+ckpts/
+outputs/
+
+# 5) Ignore any other build artifacts you know you never want to commit:
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
-
-# Ignore Isaac Sim checkpoints or outputs if they are large
-ckpts/
-outputs/
