@@ -58,6 +58,8 @@ def run_simulator(cfg):
         sim_env.create_warehouse_shelves_env()
     elif cfg.env_name == "full-warehouse":
         sim_env.create_full_warehouse_env()
+    elif cfg.env_name == "farm":
+        sim_env.create_farm_env()
 
     # Sensor setup
     sm = go2_sensors.SensorManager(cfg.num_envs)
