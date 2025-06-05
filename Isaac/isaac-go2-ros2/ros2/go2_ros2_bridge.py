@@ -4,6 +4,8 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped, Twist, TransformStamped
 from sensor_msgs.msg import PointCloud2, PointField, Image
 from sensor_msgs_py import point_cloud2
+from sensor_msgs.msg import Imu
+
 from tf2_ros import TransformBroadcaster
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 import numpy as np
@@ -23,7 +25,7 @@ from omni.isaac.ros2_bridge import read_camera_info
 
 
 class RobotDataManager(Node):
-    def __init__(self, env, lidar_annotators, cameras, cfg):
+    def __init__(self, env, lidar_annotators, cameras, imu_sensors, cfg):
         super().__init__("robot_data_manager")
         self.cfg = cfg
         self.create_ros_time_graph()
@@ -35,6 +37,7 @@ class RobotDataManager(Node):
         self.num_envs = env.unwrapped.scene.num_envs
         self.lidar_annotators = lidar_annotators
         self.cameras = cameras
+        self.imu_sensors = imu_sensors
         self.points = []
         
         # ROS2 Broadcaster
@@ -45,6 +48,8 @@ class RobotDataManager(Node):
         self.pose_pub = []
         self.lidar_pub = []
         self.semantic_seg_img_vis_pub = []
+        self.imu_pub = []
+
 
         # ROS2 Subscriber
         self.cmd_vel_sub = []
@@ -62,6 +67,9 @@ class RobotDataManager(Node):
                     self.create_publisher(PoseStamped, "unitree_go2/pose", 10))
                 self.lidar_pub.append(
                     self.create_publisher(PointCloud2, "unitree_go2/lidar/point_cloud", 10)
+                )
+                self.imu_pub.append(
+                    self.create_publisher(Imu, "unitree_go2/imu", 10)
                 )
                 self.semantic_seg_img_vis_pub.append(
                     self.create_publisher(Image, "unitree_go2/front_cam/semantic_segmentation_image_vis", 10)
@@ -81,6 +89,9 @@ class RobotDataManager(Node):
                     self.create_publisher(PoseStamped, f"unitree_go2_{i}/pose", 10))
                 self.lidar_pub.append(
                     self.create_publisher(PointCloud2, f"unitree_go2_{i}/lidar/point_cloud", 10)
+                )
+                self.imu_pub.append(
+                    self.create_publisher(Imu, f"unitree_go2_{i}/imu", 10)
                 )
                 self.semantic_seg_img_vis_pub.append(
                     self.create_publisher(Image, f"unitree_go2_{i}/front_cam/semantic_segmentation_image_vis", 10)
@@ -256,6 +267,53 @@ class RobotDataManager(Node):
         pose_msg.pose.orientation.w = base_rot[0].item()
         self.pose_pub[env_idx].publish(pose_msg)
 
+    def publish_imu_data(self, env_idx):
+        """
+        Pull raw IMU data from self.imu_sensors[env_idx], wrap it in a sensor_msgs/Imu,
+        then publish on self.imu_pub[env_idx].
+        """
+        imu_sensor = self.imu_sensors[env_idx]
+        imu_readings = imu_sensor.get_current_frame(read_gravity=True)  # 4.2+ method
+
+        print(f"[DEBUG] imu idx={env_idx} readings = {imu_readings}")
+        
+        msg = Imu()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        if self.num_envs == 1:
+            msg.header.frame_id = "unitree_go2/base_link"
+        else:
+            msg.header.frame_id = f"unitree_go2_{env_idx}/base_link"
+
+        # ── Orientation (if available) ──
+        ori = imu_readings.get("orientation", None)
+        if ori is not None:
+            msg.orientation.w = float(ori[0])
+            msg.orientation.x = float(ori[1])
+            msg.orientation.y = float(ori[2])
+            msg.orientation.z = float(ori[3])
+        else:
+            msg.orientation_covariance[0] = -1.0
+
+        # ── Angular velocity (if available) ──
+        av = imu_readings.get("ang_vel", None)
+        if av is not None:
+            msg.angular_velocity.x = float(av[0])
+            msg.angular_velocity.y = float(av[1])
+            msg.angular_velocity.z = float(av[2])
+
+        # ── Linear acceleration (if available) ──
+        la = imu_readings.get("lin_acc", None)
+        if la is not None:
+            msg.linear_acceleration.x = float(la[0])
+            msg.linear_acceleration.y = float(la[1])
+            msg.linear_acceleration.z = float(la[2])
+
+        # Finally, publish the IMU message
+        self.imu_pub[env_idx].publish(msg)
+
+
+
+
     def publish_lidar_data(self, points, env_idx):
         point_cloud = PointCloud2()
         if (self.num_envs == 1):
@@ -313,6 +371,9 @@ class RobotDataManager(Node):
                 self.lidar_pub_time = time.time()
                 for i in range(self.num_envs):
                     self.publish_lidar_data(self.lidar_annotators[i].get_data()["data"].reshape(-1, 3), i)
+
+        for i in range(self.num_envs):
+            self.publish_imu_data(i)
 
     def cmd_vel_callback(self, msg, env_idx):
         go2_ctrl.base_vel_cmd_input[env_idx][0] = msg.linear.x

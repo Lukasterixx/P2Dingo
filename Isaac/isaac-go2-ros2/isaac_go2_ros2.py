@@ -65,6 +65,8 @@ def run_simulator(cfg):
     sm = go2_sensors.SensorManager(cfg.num_envs)
     lidar_annotators = sm.add_rtx_lidar()
     cameras = sm.add_camera(cfg.freq)
+    imu_sensors = sm.add_imu(cfg.freq)  
+
 
     # Keyboard control
     system_input = carb.input.acquire_input_interface()
@@ -75,7 +77,7 @@ def run_simulator(cfg):
 
     # ROS2 Bridge
     rclpy.init()
-    dm = go2_ros2_bridge.RobotDataManager(env, lidar_annotators, cameras, cfg)
+    dm = go2_ros2_bridge.RobotDataManager(env, lidar_annotators, cameras, imu_sensors, cfg)
 
     # Run simulation loop
     sim_step_dt = float(go2_env_cfg.sim.dt * go2_env_cfg.decimation)

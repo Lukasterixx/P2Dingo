@@ -3,6 +3,7 @@ import numpy as np
 from pxr import Gf
 import omni.replicator.core as rep
 from omni.isaac.sensor import Camera
+from omni.isaac.sensor import IMUSensor
 import omni.isaac.core.utils.numpy.rotations as rot_utils
 
 class SensorManager:
@@ -42,3 +43,26 @@ class SensorManager:
             camera.set_focal_length(1.5)
             cameras.append(camera)
         return cameras
+    
+    def add_imu(self, freq):
+        """
+        Create one IMU sensor per environment and return a list of IMUSensor handles.
+        Each IMU is placed under "/World/envs/env_{i}/Go2/base/imu".
+        """
+        imu_sensors = []
+        for env_idx in range(self.num_envs):
+            # make sure the USD prim path is nested under the Go2/base link
+            prim_path = f"/World/envs/env_{env_idx}/Go2/base/imu_sensor"
+            imu = IMUSensor(
+                prim_path=prim_path,
+                name="imu",
+                frequency=freq,
+                translation=np.array([0, 0, 0]),
+                orientation=np.array([1, 0, 0, 0]),
+                linear_acceleration_filter_size=10,
+                angular_velocity_filter_size=10,
+                orientation_filter_size=10,
+            )
+            imu.initialize()
+            imu_sensors.append(imu)
+        return imu_sensors
