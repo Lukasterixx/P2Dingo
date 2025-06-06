@@ -14,6 +14,8 @@ Welcome to the P2Dingo Repo, here you will find the source code for the autonomo
 
 **Step I:** Install Ubuntu 22.04 Native Install (docker untested)
 
+**Step I.I:** Install Omniverse: https://developer.nvidia.com/omniverse?sortBy=developer_learning_library%2Fsort%2Ffeatured_in.omniverse%3Adesc%2Ctitle%3Aasc&hitsPerPage=6#section-getting-started
+
 **Step II:** Install Ros2 Humble following this link: https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html
 
 Add source `/opt/ros/humble/setup.bash` to your `~/.bashrc` to source ros2 in each terminal
