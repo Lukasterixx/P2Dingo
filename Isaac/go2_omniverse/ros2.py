@@ -34,6 +34,7 @@ from geometry_msgs.msg import TransformStamped
 from tf2_ros import TransformBroadcaster
 from go2_interfaces.msg import Go2State
 from std_msgs.msg import Header
+from rosgraph_msgs.msg import Clock
 
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import PointCloud2, PointField, Imu
@@ -115,6 +116,10 @@ def add_camera(num_envs, robot_type):
 
 def pub_robo_data_ros2(robot_type, num_envs, base_node, env, annotator_lst, start_time):
 
+    clock_msg = Clock()
+    clock_msg.clock = base_node.get_clock().now().to_msg()
+    base_node.clock_pub.publish(clock_msg)
+
     for i in range(num_envs):
         # publish ros2 info
         base_node.publish_joints(env.env.scene["robot"].data.joint_names, env.env.scene["robot"].data.joint_pos[i], i)
@@ -154,6 +159,8 @@ class RobotBaseNode(Node):
         self.go2_lidar_pub = []
         self.odom_pub = []
         self.imu_pub = []
+
+        self.clock_pub = self.create_publisher(Clock, '/clock', qos_profile)
 
         for i in range(num_envs):
             self.joint_pub.append(self.create_publisher(JointState, f'robot{i}/joint_states', qos_profile))
@@ -240,16 +247,17 @@ class RobotBaseNode(Node):
 
 
     def publish_lidar(self, points, robot_num):
-
-        point_cloud = PointCloud2()
-        point_cloud.header = Header(frame_id="odom")
+        header = Header()
+        header.stamp = self.get_clock().now().to_msg()
+        header.frame_id = "odom"
+        
         fields = [
             PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
             PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
             PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
         ]
-        point_cloud = point_cloud2.create_cloud(point_cloud.header, fields, points)
-        self.go2_lidar_pub[robot_num].publish(point_cloud)
+        cloud_msg = point_cloud2.create_cloud(header, fields, points)
+        self.go2_lidar_pub[robot_num].publish(cloud_msg)
 
 
     async def run(self):
