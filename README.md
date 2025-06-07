@@ -1,16 +1,79 @@
 [![Python](https://img.shields.io/badge/python-3.10-blue.svg)](https://docs.python.org/3/whatsnew/3.10.html)
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-orange.svg)](https://docs.ros.org/en/humble/index.html)
-[![IsaacSim](https://img.shields.io/badge/IsaacSim-4.2.0-red.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
-[![IsaacLab](https://img.shields.io/badge/IsaacLab-1.4.1-purple.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
+[![IsaacSim](https://img.shields.io/badge/IsaacSim-4.1.0-red.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
+[![IsaacLab](https://img.shields.io/badge/IsaacLab-0.3.0-purple.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
 [![Linux platform](https://img.shields.io/badge/platform-Ubuntu--22.04-green.svg)](https://releases.ubuntu.com/22.04/)
 
 Welcome to the P2Dingo Repo, here you will find the source code for the autonomous SLAM quadruped first simulated on Isaac Sim with ros2 and then deployed on a Unitree Go2 EDU
 
 ## Requirements
 1. Nvidia RTX 20 series or newer
-2. Minimum 70gb of storage on Linux
+2. Minimum 70gb of storage on Ubunutu 22.04
+3. Ros2 Humble
+4. IsaacSim 4.1
+5. IsaacLab 0.3.1 (orbit)
 
 ## Installation Guide
+
+**Step I:** Install Ubuntu 22.04 Native Install (docker untested)
+
+**Step I.I:** Install Omniverse: https://developer.nvidia.com/omniverse?sortBy=developer_learning_library%2Fsort%2Ffeatured_in.omniverse%3Adesc%2Ctitle%3Aasc&hitsPerPage=6#section-getting-started
+
+**Step II:** Install Ros2 Humble following this link: https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html
+
+Add source `/opt/ros/humble/setup.bash` to your `~/.bashrc` to source ros2 in each terminal
+
+**Step III:** Install MiniConda
+```
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm ~/miniconda3/miniconda.sh
+source ~/miniconda3/bin/activate
+conda init --all
+conda config --set auto_activate_base false
+```
+**Step IV:** Install IsaacLab 0.3.1
+```
+git clone https://github.com/isaac-sim/IsaacLab.git
+cd IsaacLab
+git checkout tags/v0.3.1 -b my-v0.3.1
+```
+Put these in your ~/.bashrc so that it sources on each terminal
+```
+export ISAACSIM_PATH="${HOME}/.local/share/ov/pkg/isaac-sim-2023.1.1"
+export ISAACSIM_PYTHON_EXE="${ISAACSIM_PATH}/python.sh"
+```
+Add a sym link to connect to isaacsim `ln -s ${ISAACSIM_PATH} _isaac_sim` and run the conda setup
+```
+./orbit.sh --conda
+conda activate orbit
+sudo apt install cmake build-essential
+```
+Correct the rsl-rl dependancy
+```
+cd ~/IsaacLab/source/extensions/omni.isaac.orbit_tasks
+code setup.py
+```
+Add this line to the extras require: `"rsl-rl": ["rsl-rl@git+https://github.com/leggedrobotics/rsl_rl.git@v2.0.1#egg=rsl-rl"],`
+```
+./orbit.sh --install
+```
+You may have to adjust the dependancy of streamsdk if errors appear:
+```
+code ~/IsaacLab/source/apps/orbit.python.kit
+"omni.kit.streamsdk.plugins" = {version = "2.5.1", exact = true}
+```
+Open `FarmNoMDL.usd` from Isaac/envs in Isaac Sim and export to the same directory as flattened `flatter.usd`. This should Allow the launcher script to attach materials and props to the world.
+
+
+## User Guide
+
+**Step V:** Execute `./run_sim.sh` (without activated conda orbit env)
+
+
+
+## Installation Guide (lightweight version, no imu)
 
 **Step I:** Install Ubuntu 22.04 Native Install (docker untested)
 
