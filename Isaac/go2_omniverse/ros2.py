@@ -124,7 +124,6 @@ def pub_robo_data_ros2(robot_type, num_envs, base_node, env, annotator_lst, star
         # publish ros2 info
         base_node.publish_joints(env.env.scene["robot"].data.joint_names, env.env.scene["robot"].data.joint_pos[i], i)
         base_node.publish_odom(env.env.scene["robot"].data.root_state_w[i, :3], env.env.scene["robot"].data.root_state_w[i, 3:7], i)
-        base_node.publish_imu(env.env.scene["robot"].data.root_state_w[i, 3:7], env.env.scene["robot"].data.root_lin_vel_b[i, :], env.env.scene["robot"].data.root_ang_vel_b[i, :], i)
         
         
         if robot_type == "go2":
@@ -150,9 +149,13 @@ def pub_robo_data_ros2(robot_type, num_envs, base_node, env, annotator_lst, star
 
 
 class RobotBaseNode(Node):
-    def __init__(self, num_envs):
+    def __init__(self, env, num_envs):
         super().__init__('go2_driver_node')
         qos_profile = QoSProfile(depth=10)
+
+        # store for your _publish_imus callback:
+        self.env = env
+        self.num_envs = num_envs
 
         self.joint_pub = []
         self.go2_state_pub = []
@@ -169,6 +172,9 @@ class RobotBaseNode(Node):
             self.odom_pub.append(self.create_publisher(Odometry, f'robot{i}/odom', qos_profile))
             self.imu_pub.append(self.create_publisher(Imu, f'robot{i}/imu', qos_profile))
         self.broadcaster= TransformBroadcaster(self, qos=qos_profile)
+
+        # **NEW**: publish IMU at 200 Hz
+        self.create_timer(1.0/200.0, self._publish_imus)
         
     def publish_joints(self, joint_names_lst, joint_state_lst, robot_num):
         # Create message
@@ -214,15 +220,25 @@ class RobotBaseNode(Node):
         odom_topic.pose.pose.orientation.w = base_rot[0].item()
         self.odom_pub[robot_num].publish(odom_topic)
 
+    def _publish_imus(self):
+        # runs at 200 Hz
+        for i in range(self.num_envs):
+            # grab sim data
+            rot =    self.env.env.scene["robot"].data.root_state_w[i, 3:7]
+            lin_vel =self.env.env.scene["robot"].data.root_lin_vel_b[i, :]
+            ang_vel =self.env.env.scene["robot"].data.root_ang_vel_b[i, :]
+            self.publish_imu(rot, lin_vel, ang_vel, i)
 
     def publish_imu(self, base_rot, base_lin_vel, base_ang_vel, robot_num):
         imu_trans = Imu()
         imu_trans.header.stamp = self.get_clock().now().to_msg()
         imu_trans.header.frame_id = f"robot{robot_num}/base_link"
 
+        # Add gravity (m/s^2) in Z
+        g = -9.81
         imu_trans.linear_acceleration.x = base_lin_vel[0].item()
         imu_trans.linear_acceleration.y = base_lin_vel[1].item()
-        imu_trans.linear_acceleration.z = base_lin_vel[2].item()
+        imu_trans.linear_acceleration.z = base_lin_vel[2].item() + g
 
         imu_trans.angular_velocity.x = base_ang_vel[0].item()
         imu_trans.angular_velocity.y = base_ang_vel[1].item()

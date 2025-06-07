@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 from omni.isaac.orbit.app import AppLauncher
 
+import threading
+from rclpy.executors import MultiThreadedExecutor
 
 import cli_args  
 import time
@@ -223,8 +225,14 @@ def run_sim():
 
     # initialize ROS2 node
     rclpy.init()
-    base_node = RobotBaseNode(env_cfg.scene.num_envs)
+    base_node = RobotBaseNode(env, env_cfg.scene.num_envs)
     add_cmd_sub(env_cfg.scene.num_envs)
+
+    # ——— START ROS2 EXECUTOR IN BACKGROUND ———
+    executor = MultiThreadedExecutor()
+    executor.add_node(base_node)
+    threading.Thread(target=executor.spin, daemon=True).start()
+    # ——— NOW base_node timers (IMU @200Hz) will fire independently ———
 
     annotator_lst = add_rtx_lidar(env_cfg.scene.num_envs, args_cli.robot, True)
     add_camera(env_cfg.scene.num_envs, args_cli.robot)
