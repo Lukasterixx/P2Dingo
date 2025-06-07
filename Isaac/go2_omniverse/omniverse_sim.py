@@ -226,7 +226,7 @@ def run_sim():
     base_node = RobotBaseNode(env_cfg.scene.num_envs)
     add_cmd_sub(env_cfg.scene.num_envs)
 
-    annotator_lst = add_rtx_lidar(env_cfg.scene.num_envs, args_cli.robot, False)
+    annotator_lst = add_rtx_lidar(env_cfg.scene.num_envs, args_cli.robot, True)
     add_camera(env_cfg.scene.num_envs, args_cli.robot)
     setup_custom_env()
     

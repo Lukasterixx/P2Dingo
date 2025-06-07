@@ -19,8 +19,12 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [
-        	'walk_forward = go2_control.walk_forward:main',
-        ],
-    },
+    'console_scripts': [
+        'walk_forward = go2_control.walk_forward:main',
+        'walk_forward_bt = go2_control.behaviors.walk_forward_bt:main',
+        'walk_forward_bt_with_permission = go2_control.behaviors.walk_forward_bt_with_permission:main',
+        'walk_forward_bt_parallel = go2_control.behaviors.walkBT:main',
+    ],
+},
+
 )

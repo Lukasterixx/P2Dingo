@@ -8,7 +8,7 @@ class WalkForwardNode(Node):
     def __init__(self):
         super().__init__('walk_forward_node')
         # Publisher on "unitree_go2/cmd_vel" (queue size 10)
-        self.cmd_pub = self.create_publisher(Twist, 'unitree_go2/cmd_vel', 10)
+        self.cmd_pub = self.create_publisher(Twist, 'robot0/cmd_vel', 10)
 
         # Prepare a constant Twist: move forward at 0.5 m/s
         self.twist_msg = Twist()
@@ -22,7 +22,7 @@ class WalkForwardNode(Node):
         # Publish at 10 Hz
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.get_logger().info('WalkForwardNode started, publishing to "unitree_go2/cmd_vel"')
+        self.get_logger().info('WalkForwardNode started, publishing to "robot0/cmd_vel"')
 
     def timer_callback(self):
         # Simply keep publishing the same forward‐walk command
