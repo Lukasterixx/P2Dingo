@@ -24,6 +24,7 @@ setup(
         'walk_forward_bt = go2_control.behaviors.walk_forward_bt:main',
         'walk_forward_bt_with_permission = go2_control.behaviors.walk_forward_bt_with_permission:main',
         'walk_forward_bt_parallel = go2_control.behaviors.walkBT:main',
+        'scan2d = go2_control.behaviors.scan2d:main',
     ],
 },
 
